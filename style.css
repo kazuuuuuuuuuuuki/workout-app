@@ -1,0 +1,61 @@
+/* === 全体のフォント設定 === */
+body {
+  font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  background-color: #cdcece;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+/* ページ全体の幅設定（スマホでも見やすく） */
+.page-container {
+  width: 100%;
+  max-width: 640px; /* スマホ・PCで見やすい幅 */
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box; /* パディングを含めた幅計算 */
+}
+
+/* === タイトルのデザイン === */
+.app-title {
+  font-size: 36px;
+  color: #000000;
+  margin-top: 40px;
+  margin-bottom: 30px;
+  font-weight: bold;
+}
+
+/* === ボタンの共通デザイン（リセット） === */
+button {
+  font-family: inherit; /* フォントを親に合わせる */
+}
+
+/* === スタートボタンのデザイン === */
+.start-button {
+  display: inline-block;
+  background-color: #04d5ff;
+  color: rgb(6, 0, 0);
+  font-size: 20px;
+  font-weight: bold;
+  padding: 15px 40px;
+  border-radius: 30px;
+  text-decoration: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: 0.3s;
+  border: none; /* デフォルトの枠線を消す */
+  cursor: pointer;
+}
+
+.start-button:hover {
+  background-color: #004cff;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0,0,0,0.2);
+}
+
+/* === カレンダーコンテナ === */
+.calendar-container {
+  margin-bottom: 40px;
+  display: flex;
+  justify-content: center;
+}

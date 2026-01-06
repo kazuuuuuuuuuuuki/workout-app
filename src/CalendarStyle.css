@@ -1,0 +1,72 @@
+/* カレンダーの基本コンテナ */
+.react-calendar {
+  width: 350px !important;
+  max-width: 100%;
+  background: rgb(255, 255, 255);
+  border: 1px solid #a0a096;
+  border-radius: 8px;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.125em;
+  margin: 0 auto; /* 中央寄せ */
+  box-shadow: 0 4px 12px rgba(166, 153, 54, 0.15);
+  overflow: hidden; /* はみ出し防止 */
+}
+
+/* ナビゲーション（年月表示）の崩れ防止 */
+.react-calendar__navigation {
+  display: flex !important;
+  height: 44px;
+  margin-bottom: 1em;
+}
+
+.react-calendar__navigation button {
+  min-width: 44px;
+  background: none;
+  font-size: 16px;
+  margin-top: 8px;
+}
+
+/* 左上に飛んでしまう文字を強制的に隠す（念の為） */
+.react-calendar__navigation__label {
+  pointer-events: none; /* 誤操作防止 */
+}
+
+/* --- 記録がある日（薄い黄色の四角形） --- */
+.highlight-day {
+  background-color: #fbeea5 !important; /* 薄い黄色 (レモンシフォン色) */
+  color: #333333 !important;            /* 文字は黒くして見やすく */
+  border-radius: 4px;                   /* 少しだけ角を丸めた四角形（完全に真四角がいい場合は 0 にしてください） */
+  font-weight: bold;
+}
+
+/* 曜日（月火水...）の下線を消す */
+.react-calendar__month-view__weekdays {
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 0.75em;
+}
+
+/* 日付タイルのサイズ調整 */
+.react-calendar__tile {
+  max-width: 100%;
+  padding: 10px 6.6667px;
+  background: none;
+  text-align: center;
+  line-height: 16px;
+}
+
+/* === 選択中の日付のデザイン（これを一番下に追加） === */
+.react-calendar__tile--active {
+  background: #007bff !important; /* 濃い青背景 */
+  color: #ffffff !important;      /* 白い文字（これで消えなくなります！） */
+  border-radius: 50%;             /* 丸くする */
+  font-weight: bold;              /* 文字を太くして見やすく */
+}
+
+/* （念の為）選択中 かつ ホバーした時も色を維持 */
+.react-calendar__tile--active:enabled:hover,
+.react-calendar__tile--active:enabled:focus {
+  background: #0056b3 !important; /* 少し暗めの青 */
+  color: white !important;
+}
