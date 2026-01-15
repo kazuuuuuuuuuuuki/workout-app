@@ -59,3 +59,25 @@ button {
   display: flex;
   justify-content: center;
 }
+
+/* src/style.css の一番下に追加 */
+
+/* --- スマホ対策 --- */
+@media screen and (max-width: 768px) {
+  /* 入力欄の文字サイズを16px以上に固定して、iPhoneの勝手なズームを防ぐ */
+  input, select, textarea, button {
+    font-size: 16px !important; 
+  }
+
+  /* 全体の余白をスマホ用に調整 */
+  .container {
+    width: 95%;
+    padding: 10px;
+  }
+  
+  /* カレンダーを画面幅に合わせる */
+  .react-calendar {
+    width: 100% !important;
+    font-size: 0.9em;
+  }
+}
