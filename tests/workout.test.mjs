@@ -4,6 +4,7 @@ import {
   WORKOUT_KEY, RECOVERY_KEY, WorkoutStorageAdapter,
   parseBackup, serializeBackup, summarizeRecords, planRestore,
 } from '../src/data/workoutData.js';
+import { HistoryAnalyzer, MaxWeightAnalyzer, EstimatedOneRmAnalyzer } from '../src/analysis/HistoryAnalyzer.js';
 
 const sample = {
   '2026-11-09': [{ id: 1.123, name: 'ダンベルカール', rest: '2分30秒', isUnilateral: true,
@@ -152,3 +153,64 @@ test('saving one edited day keeps every other date and existing format', () => {
   assert.deepEqual(Object.keys(store.readAll()), ['2026-11-10']);
 });
 
+// Original formulas/selection rules, isolated from the supplied React components.
+function legacyMaxWeight(history, name) {
+  let max = 0;
+  Object.values(history).forEach(day => day.forEach(ex => {
+    if (ex.name === name) ex.sets.forEach(set => {
+      const w = parseFloat(set.weight);
+      if (!isNaN(w) && w > max) max = w;
+    });
+  }));
+  return max > 0 ? max : null;
+}
+function legacyOneRm(history) {
+  const records = {};
+  Object.keys(history).forEach(date => history[date].forEach(ex => ex.sets.forEach(set => {
+    const weight = parseFloat(set.weight); const reps = parseFloat(set.reps);
+    if (!isNaN(weight) && !isNaN(reps)) {
+      const oneRM = weight * (1 + reps / 33.33);
+      if (!records[ex.name] || oneRM > records[ex.name].oneRM)
+        records[ex.name] = { name: ex.name, oneRM, weight, reps, date, side: set.side };
+    }
+  })));
+  return Object.values(records).sort((a, b) => b.oneRM - a.oneRM);
+}
+
+test('both existing analyses match the pre-refactor results without mutating data', () => {
+  const before = JSON.stringify(sample);
+  for (const name of ['ダンベルカール', 'ベンチプレス', '未登録'])
+    assert.equal(new MaxWeightAnalyzer(name).analyze(sample), legacyMaxWeight(sample, name));
+  assert.deepEqual(new EstimatedOneRmAnalyzer().analyze(sample), legacyOneRm(sample));
+  assert.equal(JSON.stringify(sample), before);
+});
+
+test('analysis preserves 1-rep formula, ties, blanks, zero, and left/right rules', () => {
+  const data = {
+    '2026-01-01': [{ name: 'テスト', sets: [
+      { weight: '10', reps: '1', side: '左' }, { weight: '10', reps: '1', side: '右' },
+      { weight: '100', reps: '', side: null }, { weight: '', reps: '10' },
+    ] }, { name: 'ゼロ', sets: [{ weight: '0', reps: '1' }] }],
+    '2026-01-02': [{ name: 'テスト', sets: [{ weight: '10', reps: '1', side: '右' }] }],
+  };
+  assert.deepEqual(new EstimatedOneRmAnalyzer().analyze(data), legacyOneRm(data));
+  assert.equal(new EstimatedOneRmAnalyzer().analyze(data)[0].side, '左');
+  assert.equal(new MaxWeightAnalyzer('テスト').analyze(data), 100);
+  assert.equal(new MaxWeightAnalyzer('ゼロ').analyze(data), null);
+});
+
+test('analyzers can be reused and return correct empty results', () => {
+  const analyzer = new EstimatedOneRmAnalyzer();
+  analyzer.analyze(sample);
+  assert.deepEqual(analyzer.analyze({}), []);
+  assert.equal(new MaxWeightAnalyzer('ベンチプレス').analyze({}), null);
+});
+
+test('a new analysis can use the common traversal without changing the template', () => {
+  class CountAnalyzer extends HistoryAnalyzer {
+    createAccumulator() { return { count: 0 }; }
+    visitSet(a) { a.count++; }
+    getResult(a) { return a.count; }
+  }
+  assert.equal(new CountAnalyzer().analyze(sample), 5);
+});

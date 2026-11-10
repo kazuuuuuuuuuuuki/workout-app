@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { getWorkoutStore } from './data/workoutData';
+import { MaxWeightAnalyzer } from './analysis/HistoryAnalyzer';
 
 export default function RecordPage() {
   const location = useLocation();
@@ -17,20 +19,25 @@ export default function RecordPage() {
   const [allHistory, setAllHistory] = useState({});
   const [activeTimer, setActiveTimer] = useState({ exerciseId: null, timeLeft: 0 });
 
+  const [storageError, setStorageError] = useState('');
+
   // データ読み込み
   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem('workout_data_v2')) || {};
-    setAllHistory(savedData);
-    if (savedData[targetDate]) {
-      setExercises(savedData[targetDate]);
-    }
-    const namesSet = new Set();
-    Object.values(savedData).forEach(dayExercises => {
-      dayExercises.forEach(ex => {
-        if (ex.name) namesSet.add(ex.name);
+    try {
+      const savedData = getWorkoutStore().readAll();
+      setAllHistory(savedData);
+      setExercises(savedData[targetDate] || []);
+      const namesSet = new Set();
+      Object.values(savedData).forEach(dayExercises => {
+        dayExercises.forEach(ex => {
+          if (ex.name) namesSet.add(ex.name);
+        });
       });
-    });
-    setPastExerciseNames([...namesSet]);
+      setPastExerciseNames([...namesSet]);
+      setStorageError('');
+    } catch (error) {
+      setStorageError(error.message);
+    }
   }, [targetDate]);
 
   // タイマー処理
@@ -73,20 +80,7 @@ export default function RecordPage() {
     setActiveTimer({ exerciseId: null, timeLeft: 0 });
   };
 
-  const getMaxWeight = (name) => {
-    let max = 0;
-    Object.values(allHistory).forEach(dayExercises => {
-      dayExercises.forEach(ex => {
-        if (ex.name === name) {
-          ex.sets.forEach(set => {
-            const w = parseFloat(set.weight);
-            if (!isNaN(w) && w > max) max = w;
-          });
-        }
-      });
-    });
-    return max > 0 ? max : null;
-  };
+  const getMaxWeight = name => new MaxWeightAnalyzer(name).analyze(allHistory);
 
   // --- 種目の追加 ---
   const handleAddExercise = (e) => {
@@ -221,16 +215,19 @@ export default function RecordPage() {
   };
 
   const handleSaveAll = () => {
-    const savedData = JSON.parse(localStorage.getItem('workout_data_v2')) || {};
-    if (exercises.length === 0) {
-      delete savedData[targetDate];
-      alert(`${targetDate} の記録を削除（クリア）しました！`);
-    } else {
-      savedData[targetDate] = exercises;
-      alert(`${targetDate} の記録を保存しました！`);
+    if (storageError) {
+      window.alert('記録の読み込みに失敗しているため、保存を停止しました。');
+      return;
     }
-    localStorage.setItem('workout_data_v2', JSON.stringify(savedData));
-    navigate('/');
+    try {
+      getWorkoutStore().saveDay(targetDate, exercises);
+      alert(exercises.length === 0
+        ? `${targetDate} の記録を削除（クリア）しました！`
+        : `${targetDate} の記録を保存しました！`);
+      navigate('/');
+    } catch (error) {
+      window.alert(`記録を保存できませんでした。画面を閉じずに内容を確認してください。${error.message}`);
+    }
   };
 
   const formatTimeDisplay = (seconds) => {
@@ -243,6 +240,7 @@ export default function RecordPage() {
     <div className="page-container" style={{ position: 'relative', maxWidth: '600px', margin: '0 auto', padding: '20px', paddingBottom: '100px' }}>
       
       <h1>{targetDate}</h1>
+      {storageError && <p role="alert" style={{ color: '#b00020' }}>{storageError}</p>}
 
       {/* 種目追加フォーム */}
       <div style={{ backgroundColor: '#fff', padding: '15px', borderRadius: '8px', marginBottom: '30px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
