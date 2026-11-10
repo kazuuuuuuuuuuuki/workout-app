@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import './CalendarStyle.css';
-import BackupPanel from './components/BackupPanel'; 
+import BackupPanel from './components/BackupPanel';
+import { getWorkoutStore } from './data/workoutData'; 
 
 export default function TopPage() {
   // 日付フォーマット用の関数
@@ -24,15 +25,18 @@ export default function TopPage() {
   
   const [motivationMessage, setMotivationMessage] = useState("読み込み中...");
 
+  const [storageError, setStorageError] = useState('');
+
   // データ読み込み（カレンダー用）
   useEffect(() => {
-    const allData = JSON.parse(localStorage.getItem('workout_data_v2')) || {};
-    
-    setRecordedDates(Object.keys(allData));
-
-    if (allData[date]) {
-      setDailyExercises(allData[date]);
-    } else {
+    try {
+      const allData = getWorkoutStore().readAll();
+      setRecordedDates(Object.keys(allData));
+      setDailyExercises(allData[date] || []);
+      setStorageError('');
+    } catch (error) {
+      setStorageError(error.message);
+      setRecordedDates([]);
       setDailyExercises([]);
     }
   }, [date]);
@@ -60,6 +64,7 @@ export default function TopPage() {
     <div className="page-container" style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
       <h1 className="app-title" style={{ textAlign: 'center', marginBottom: '30px' }}>筋トレ記録アプリ</h1>
 
+      {storageError && <p role="alert" style={{ color: '#b00020' }}>{storageError}</p>}
       {/* サーバーからのメッセージ表示エリア */}
       <div style={{ textAlign: 'center', marginBottom: '20px', color: '#007bff', fontWeight: 'bold', fontSize: '1.2rem' }}>
         {motivationMessage}
