@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import './CalendarStyle.css'; 
+import './CalendarStyle.css';
+import BackupPanel from './components/BackupPanel'; 
 
 export default function TopPage() {
   // 日付フォーマット用の関数
@@ -155,6 +156,7 @@ export default function TopPage() {
           記録をつける / 編集する
         </Link>
       </div>
+      <BackupPanel />
     </div>
   );
 }
